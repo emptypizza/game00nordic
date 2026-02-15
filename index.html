@@ -3,10 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Galapagos: Escort Mission</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -15,6 +20,8 @@
             touch-action: none;
             font-family: 'Noto Sans KR', sans-serif;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         /* --- UI 레이아웃 --- */
@@ -33,7 +40,11 @@
         .header {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(5px);
-            padding: 10px 20px;
+            -webkit-backdrop-filter: blur(5px);
+            padding: clamp(6px, 1.5vw, 14px) clamp(10px, 3vw, 24px);
+            padding-top: max(clamp(6px, 1.5vw, 14px), env(safe-area-inset-top));
+            padding-left: max(clamp(10px, 3vw, 24px), env(safe-area-inset-left));
+            padding-right: max(clamp(10px, 3vw, 24px), env(safe-area-inset-right));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -45,25 +56,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 14px;
+            font-size: clamp(10px, 2.5vw, 16px);
         }
 
         .stat-value {
             font-family: 'Black Han Sans', sans-serif;
-            font-size: 24px;
+            font-size: clamp(16px, 4.5vw, 28px);
             color: #FFD700;
             text-shadow: 2px 2px 0 #000;
         }
 
         /* HP 게이지 스타일 */
         .hp-bar-bg {
-            width: 120px;
-            height: 15px;
+            width: clamp(70px, 20vw, 140px);
+            height: clamp(10px, 2.5vw, 18px);
             background: #333;
             border-radius: 10px;
             overflow: hidden;
             border: 2px solid #fff;
-            margin-top: 5px;
+            margin-top: clamp(2px, 0.5vh, 6px);
         }
 
         .hp-bar-fill {
@@ -76,20 +87,20 @@
         /* 진행도 바 */
         .progress-bar-container {
             position: absolute;
-            bottom: 20px;
+            bottom: max(clamp(12px, 3vh, 24px), env(safe-area-inset-bottom));
             left: 50%;
             transform: translateX(-50%);
             width: 80%;
-            height: 10px;
+            height: clamp(6px, 1.5vw, 12px);
             background: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
         }
 
         .progress-indicator {
             position: absolute;
-            top: -15px;
+            top: clamp(-18px, -3vw, -12px);
             left: 0%;
-            font-size: 24px;
+            font-size: clamp(18px, 4vw, 28px);
             transform: translateX(-50%);
             transition: left 0.1s linear;
         }
@@ -114,31 +125,33 @@
 
         .popup h1 {
             font-family: 'Black Han Sans', sans-serif;
-            font-size: 40px;
-            margin: 0 0 20px 0;
+            font-size: clamp(24px, 7vw, 48px);
+            margin: 0 0 clamp(10px, 3vw, 24px) 0;
             color: #4CAF50;
             text-shadow: 3px 3px 0 #000;
         }
 
         .popup p {
-            font-size: 18px;
+            font-size: clamp(14px, 3.5vw, 22px);
             color: #ccc;
-            margin-bottom: 30px;
+            margin-bottom: clamp(16px, 4vw, 36px);
             line-height: 1.5;
+            padding: 0 20px;
         }
 
         .btn {
             background: #FF5722;
             color: white;
             border: none;
-            padding: 15px 50px;
-            font-size: 20px;
+            padding: clamp(10px, 2.5vw, 18px) clamp(30px, 8vw, 60px);
+            font-size: clamp(16px, 3.5vw, 24px);
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 5px 0 #BF360C;
             transition: transform 0.1s;
             font-family: 'Noto Sans KR', sans-serif;
+            pointer-events: auto;
         }
 
         .btn:active {
@@ -168,7 +181,7 @@
                 <div class="hp-bar-bg">
                     <div class="hp-bar-fill" id="ui-hp-bar"></div>
                 </div>
-                <span style="font-size:12px; margin-top:2px;" id="ui-hp-text">10/10</span>
+                <span style="font-size:clamp(9px, 2vw, 14px); margin-top:2px;" id="ui-hp-text">10/10</span>
             </div>
         </div>
 
@@ -235,7 +248,12 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const TILE_SIZE = 40;
+        // 디바이스 해상도에 맞춘 스케일 팩터
+        let dpr = window.devicePixelRatio || 1;
+        let scaleFactor = 1; // 게임 내 오브젝트 스케일
+
+        const BASE_TILE_SIZE = 40;
+        let TILE_SIZE = BASE_TILE_SIZE;
 
         // 맵 크기 (넓게 설정하여 이동 시간 확보)
         const MAP_COLS = 30;
@@ -280,7 +298,7 @@
 
         class Ship {
             constructor(maxHp) {
-                this.radius = 35;
+                this.radius = 35 * scaleFactor;
                 // 시작: 좌측 하단
                 this.x = TILE_SIZE * 2;
                 this.y = (MAP_ROWS - 2) * TILE_SIZE;
@@ -336,16 +354,16 @@
                 ctx.translate(this.x - camera.x, this.y - camera.y);
 
                 // 바퀴 (장식)
-                ctx.font = '20px Arial';
-                ctx.fillText(ASSETS.wheel, -15, 15);
-                ctx.fillText(ASSETS.wheel, 15, 15);
+                ctx.font = `${Math.round(20 * scaleFactor)}px Arial`;
+                ctx.fillText(ASSETS.wheel, -15 * scaleFactor, 15 * scaleFactor);
+                ctx.fillText(ASSETS.wheel, 15 * scaleFactor, 15 * scaleFactor);
 
                 // 배
-                ctx.font = '60px Arial';
+                ctx.font = `${Math.round(60 * scaleFactor)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 // 목적지 방향 보게 반전 (우측 상단이므로 기본이 맞음)
-                ctx.fillText(ASSETS.ship, 0, -10);
+                ctx.fillText(ASSETS.ship, 0, -10 * scaleFactor);
 
                 ctx.restore();
             }
@@ -370,7 +388,7 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.radius = 15;
+                this.radius = 15 * scaleFactor;
                 this.speed = 250; // 배보다 훨씬 빠름
                 this.angle = 0;
             }
@@ -401,13 +419,13 @@
                 if (Math.cos(this.angle) < 0) ctx.scale(-1, 1);
 
                 // 캐릭터
-                ctx.font = '30px Arial';
+                ctx.font = `${Math.round(30 * scaleFactor)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(ASSETS.player, 0, 0);
                 // 대장 표시
-                ctx.font = '12px Arial';
-                ctx.fillText('🪓', 0, -20);
+                ctx.font = `${Math.round(12 * scaleFactor)}px Arial`;
+                ctx.fillText('🪓', 0, -20 * scaleFactor);
                 ctx.restore();
             }
         }
@@ -424,7 +442,7 @@
                 this.x = Math.max(0, Math.min(this.x, MAP_COLS * TILE_SIZE));
                 this.y = Math.max(0, Math.min(this.y, MAP_ROWS * TILE_SIZE));
 
-                this.radius = 18;
+                this.radius = 18 * scaleFactor;
                 this.speed = 80 + Math.random() * 40; // 배보다 빠름
                 this.stunned = 0;
             }
@@ -455,12 +473,12 @@
                     ctx.rotate(Math.random() * 0.5); // 기절 효과
                 }
 
-                ctx.font = '35px Arial';
+                ctx.font = `${Math.round(35 * scaleFactor)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(ASSETS.enemy, 0, 0);
 
-                if (this.stunned > 0) ctx.fillText('💫', 0, -20);
+                if (this.stunned > 0) ctx.fillText('💫', 0, -20 * scaleFactor);
 
                 ctx.restore();
             }
@@ -481,7 +499,7 @@
             }
             draw(ctx) {
                 ctx.globalAlpha = Math.max(0, this.life);
-                ctx.font = '20px Arial';
+                ctx.font = `${Math.round(20 * scaleFactor)}px Arial`;
                 ctx.fillText(this.char, this.x - camera.x, this.y - camera.y);
                 ctx.globalAlpha = 1.0;
             }
@@ -582,8 +600,8 @@
                     playSound('hit');
                     createParticles(e.x, e.y, '💥');
                     const angle = Math.atan2(e.y - player.y, e.x - player.x);
-                    e.x += Math.cos(angle) * 100; // 넉백
-                    e.y += Math.sin(angle) * 100;
+                    e.x += Math.cos(angle) * 100 * scaleFactor; // 넉백
+                    e.y += Math.sin(angle) * 100 * scaleFactor;
                     e.stunned = 1.0; // 1초 기절
                 }
 
@@ -627,7 +645,7 @@
             // 장식을 엔티티처럼 변환해서 그리기
             visibleDecor.forEach(d => {
                 drawShadow(ctx, d.x, d.y, 15, d.char, d.scale);
-                ctx.font = `${30 * d.scale}px Arial`;
+                ctx.font = `${Math.round(30 * d.scale * scaleFactor)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText(d.char, d.x - camera.x, d.y - camera.y);
             });
@@ -677,10 +695,21 @@
         }
 
         function resize() {
+            dpr = window.devicePixelRatio || 1;
             viewW = window.innerWidth;
             viewH = window.innerHeight;
-            canvas.width = viewW;
-            canvas.height = viewH;
+
+            // 캔버스를 디바이스 픽셀 비율에 맞춰 고해상도 렌더링
+            canvas.width = viewW * dpr;
+            canvas.height = viewH * dpr;
+            canvas.style.width = viewW + 'px';
+            canvas.style.height = viewH + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // 화면 크기 기반 스케일 팩터 (기준: 414px 너비)
+            const baseWidth = 414;
+            scaleFactor = Math.max(0.6, Math.min(1.8, Math.min(viewW, viewH * 0.7) / baseWidth));
+            TILE_SIZE = BASE_TILE_SIZE * scaleFactor;
         }
 
         window.addEventListener('resize', resize);
