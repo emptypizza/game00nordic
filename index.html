@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -19,8 +20,10 @@
         /* --- UI 레이아웃 --- */
         #ui-layer {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             display: flex;
             flex-direction: column;
@@ -44,13 +47,14 @@
             align-items: center;
             font-size: 14px;
         }
+
         .stat-value {
             font-family: 'Black Han Sans', sans-serif;
             font-size: 24px;
             color: #FFD700;
             text-shadow: 2px 2px 0 #000;
         }
-        
+
         /* HP 게이지 스타일 */
         .hp-bar-bg {
             width: 120px;
@@ -61,6 +65,7 @@
             border: 2px solid #fff;
             margin-top: 5px;
         }
+
         .hp-bar-fill {
             height: 100%;
             background: #ff3d00;
@@ -79,6 +84,7 @@
             background: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
         }
+
         .progress-indicator {
             position: absolute;
             top: -15px;
@@ -91,8 +97,10 @@
         /* 팝업 (시작, 종료, 클리어) */
         .popup {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
@@ -103,7 +111,7 @@
             color: white;
             text-align: center;
         }
-        
+
         .popup h1 {
             font-family: 'Black Han Sans', sans-serif;
             font-size: 40px;
@@ -132,14 +140,18 @@
             transition: transform 0.1s;
             font-family: 'Noto Sans KR', sans-serif;
         }
+
         .btn:active {
             transform: translateY(5px);
             box-shadow: none;
         }
-        .hidden { display: none !important; }
 
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
+
 <body>
 
     <canvas id="gameCanvas"></canvas>
@@ -183,7 +195,7 @@
     <script>
         // --- 오디오 시스템 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -223,14 +235,14 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const TILE_SIZE = 40; 
-        
+        const TILE_SIZE = 40;
+
         // 맵 크기 (넓게 설정하여 이동 시간 확보)
         const MAP_COLS = 30;
         const MAP_ROWS = 30;
 
         const ASSETS = {
-            player: '🦦', // 미어캣
+            player: '👩‍🦰', // 여성 전사
             enemy: '🐆',  // 표범
             ship: '⛵',   // 배
             wheel: '🛒',  // 바퀴 장식
@@ -272,22 +284,22 @@
                 // 시작: 좌측 하단
                 this.x = TILE_SIZE * 2;
                 this.y = (MAP_ROWS - 2) * TILE_SIZE;
-                
+
                 // 목표: 우측 상단
                 this.targetX = (MAP_COLS - 2) * TILE_SIZE;
                 this.targetY = TILE_SIZE * 2;
 
                 this.maxHp = maxHp;
                 this.hp = maxHp;
-                
+
                 // 속도: 초당 1셀 (60프레임 기준, 1초에 TILE_SIZE만큼 이동)
-                this.speed = TILE_SIZE / 60; 
+                this.speed = TILE_SIZE / 60;
 
                 // 이동 각도 계산
                 const dx = this.targetX - this.x;
                 const dy = this.targetY - this.y;
                 this.angle = Math.atan2(dy, dx);
-                
+
                 this.totalDist = Math.hypot(dx, dy);
                 this.invincible = 0;
             }
@@ -308,7 +320,7 @@
                 if (this.invincible > 0) this.invincible--;
 
                 // 진행률 UI 업데이트
-                const currentDist = Math.hypot(this.x - (TILE_SIZE*2), this.y - ((MAP_ROWS-2)*TILE_SIZE));
+                const currentDist = Math.hypot(this.x - (TILE_SIZE * 2), this.y - ((MAP_ROWS - 2) * TILE_SIZE));
                 const progress = Math.min(100, (currentDist / this.totalDist) * 100);
                 document.getElementById('ui-progress-icon').style.left = `${progress}%`;
             }
@@ -316,13 +328,13 @@
             draw(ctx) {
                 // 그림자
                 drawShadow(ctx, this.x, this.y, this.radius, ASSETS.ship, 1.5);
-                
+
                 // 배 본체
                 if (this.invincible > 0 && Math.floor(Date.now() / 100) % 2 === 0) return; // 깜빡임
 
                 ctx.save();
                 ctx.translate(this.x - camera.x, this.y - camera.y);
-                
+
                 // 바퀴 (장식)
                 ctx.font = '20px Arial';
                 ctx.fillText(ASSETS.wheel, -15, 15);
@@ -334,7 +346,7 @@
                 ctx.textBaseline = 'middle';
                 // 목적지 방향 보게 반전 (우측 상단이므로 기본이 맞음)
                 ctx.fillText(ASSETS.ship, 0, -10);
-                
+
                 ctx.restore();
             }
 
@@ -344,10 +356,10 @@
                 this.invincible = 60; // 1초 무적
                 playSound('damage');
                 updateUI();
-                
+
                 // 화면 흔들림 효과
                 const ui = document.getElementById('ui-layer');
-                ui.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+                ui.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
                 setTimeout(() => ui.style.transform = 'none', 100);
 
                 if (this.hp <= 0) gameOver();
@@ -369,14 +381,14 @@
                     const worldY = input.y + camera.y;
                     const dx = worldX - this.x;
                     const dy = worldY - this.y;
-                    
+
                     if (Math.hypot(dx, dy) > 5) {
                         this.angle = Math.atan2(dy, dx);
                         this.x += Math.cos(this.angle) * this.speed * dt;
                         this.y += Math.sin(this.angle) * this.speed * dt;
                     }
                 }
-                
+
                 // 맵 밖 제한
                 this.x = Math.max(0, Math.min(this.x, MAP_COLS * TILE_SIZE));
                 this.y = Math.max(0, Math.min(this.y, MAP_ROWS * TILE_SIZE));
@@ -387,6 +399,8 @@
                 ctx.save();
                 ctx.translate(this.x - camera.x, this.y - camera.y);
                 if (Math.cos(this.angle) < 0) ctx.scale(-1, 1);
+
+                // 캐릭터
                 ctx.font = '30px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -405,7 +419,7 @@
                 const dist = 400 + Math.random() * 200;
                 this.x = ship.x + Math.cos(angle) * dist;
                 this.y = ship.y + Math.sin(angle) * dist;
-                
+
                 // 맵 안쪽으로 보정
                 this.x = Math.max(0, Math.min(this.x, MAP_COLS * TILE_SIZE));
                 this.y = Math.max(0, Math.min(this.y, MAP_ROWS * TILE_SIZE));
@@ -425,29 +439,29 @@
                 const dx = ship.x - this.x;
                 const dy = ship.y - this.y;
                 const angle = Math.atan2(dy, dx);
-                
+
                 this.x += Math.cos(angle) * this.speed * dt;
                 this.y += Math.sin(angle) * this.speed * dt;
             }
 
             draw(ctx) {
                 if (this.x - camera.x < -50 || this.x - camera.x > viewW + 50) return;
-                
+
                 drawShadow(ctx, this.x, this.y, this.radius, ASSETS.enemy);
                 ctx.save();
                 ctx.translate(this.x - camera.x, this.y - camera.y);
-                
+
                 if (this.stunned > 0) {
                     ctx.rotate(Math.random() * 0.5); // 기절 효과
                 }
-                
+
                 ctx.font = '35px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(ASSETS.enemy, 0, 0);
-                
+
                 if (this.stunned > 0) ctx.fillText('💫', 0, -20);
-                
+
                 ctx.restore();
             }
         }
@@ -478,18 +492,18 @@
         function startGame(idx) {
             currentStageIdx = idx;
             config = STAGES[idx];
-            
+
             // 초기화
             ship = new Ship(config.hp);
             // 플레이어는 배 근처에서 시작
-            player = new Player(ship.x + 50, ship.y); 
-            
+            player = new Player(ship.x + 50, ship.y);
+
             enemies = [];
             particles = [];
-            
+
             // 장식 생성
             decorations = [];
-            for(let i=0; i<100; i++) {
+            for (let i = 0; i < 100; i++) {
                 decorations.push({
                     x: Math.random() * MAP_COLS * TILE_SIZE,
                     y: Math.random() * MAP_ROWS * TILE_SIZE,
@@ -503,19 +517,19 @@
 
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
-            
+
             lastTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
 
         function updateUI() {
             document.getElementById('ui-stage').innerText = config.level;
-            
+
             // HP Bar
             const hpPct = (ship.hp / ship.maxHp) * 100;
             const bar = document.getElementById('ui-hp-bar');
             bar.style.width = `${hpPct}%`;
-            
+
             if (hpPct <= 30) bar.style.backgroundColor = 'red';
             else bar.style.backgroundColor = '#ff3d00'; // Orange-Red
 
@@ -528,13 +542,13 @@
             }
         }
 
-        function drawShadow(ctx, x, y, r, char, scale=1) {
+        function drawShadow(ctx, x, y, r, char, scale = 1) {
             ctx.save();
             ctx.translate(x - camera.x, y - camera.y);
             ctx.scale(1, 0.5);
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath();
-            ctx.arc(0, r, r * scale, 0, Math.PI*2);
+            ctx.arc(0, r, r * scale, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
@@ -586,7 +600,7 @@
 
             particles.forEach((p, i) => {
                 p.update(dt);
-                if(p.life <= 0) particles.splice(i, 1);
+                if (p.life <= 0) particles.splice(i, 1);
             });
 
             // 2. 그리기
@@ -599,13 +613,13 @@
             const offsetX = camera.x % TILE_SIZE;
             const offsetY = camera.y % TILE_SIZE;
             ctx.beginPath();
-            for(let x = -offsetX; x < viewW; x+=TILE_SIZE) { ctx.moveTo(x,0); ctx.lineTo(x,viewH); }
-            for(let y = -offsetY; y < viewH; y+=TILE_SIZE) { ctx.moveTo(0,y); ctx.lineTo(viewW,y); }
+            for (let x = -offsetX; x < viewW; x += TILE_SIZE) { ctx.moveTo(x, 0); ctx.lineTo(x, viewH); }
+            for (let y = -offsetY; y < viewH; y += TILE_SIZE) { ctx.moveTo(0, y); ctx.lineTo(viewW, y); }
             ctx.stroke();
 
             // 오브젝트 그리기 (Y 정렬)
             // 장식은 렌더링 최적화를 위해 화면 내 것만
-            const visibleDecor = decorations.filter(d => 
+            const visibleDecor = decorations.filter(d =>
                 d.x > camera.x - 50 && d.x < camera.x + viewW + 50 &&
                 d.y > camera.y - 50 && d.y < camera.y + viewH + 50
             );
@@ -621,14 +635,14 @@
             const renderList = [ship, player, ...enemies];
             renderList.sort((a, b) => a.y - b.y);
             renderList.forEach(obj => obj.draw(ctx));
-            
+
             particles.forEach(p => p.draw(ctx));
 
             requestAnimationFrame(gameLoop);
         }
 
         function createParticles(x, y, char) {
-            for(let i=0; i<5; i++) particles.push(new Particle(x, y, char));
+            for (let i = 0; i < 5; i++) particles.push(new Particle(x, y, char));
         }
 
         function stageClear() {
@@ -637,7 +651,7 @@
             document.getElementById('result-title').innerText = "ARRIVED!";
             document.getElementById('result-title').style.color = "#4CAF50";
             document.getElementById('result-desc').innerText = "배가 무사히 도착했습니다.";
-            
+
             const btn = document.getElementById('result-btn');
             if (currentStageIdx < STAGES.length - 1) {
                 btn.innerText = "NEXT STAGE";
@@ -654,11 +668,11 @@
             document.getElementById('result-title').innerText = "MISSION FAILED";
             document.getElementById('result-title').style.color = "#FF3d00";
             document.getElementById('result-desc').innerText = "식량 배가 파괴되었습니다.";
-            
+
             const btn = document.getElementById('result-btn');
             btn.innerText = "RETRY";
             btn.onclick = () => startGame(currentStageIdx);
-            
+
             document.getElementById('result-screen').classList.remove('hidden');
         }
 
@@ -670,28 +684,29 @@
         }
 
         window.addEventListener('resize', resize);
-        
+
         // 입력 핸들러
         const handleInputStart = (x, y) => { input.active = true; input.x = x; input.y = y; };
-        const handleInputMove = (x, y) => { if(input.active) { input.x = x; input.y = y; } };
+        const handleInputMove = (x, y) => { if (input.active) { input.x = x; input.y = y; } };
         const handleInputEnd = () => { input.active = false; };
 
         window.addEventListener('mousedown', e => handleInputStart(e.clientX, e.clientY));
         window.addEventListener('mousemove', e => handleInputMove(e.clientX, e.clientY));
         window.addEventListener('mouseup', handleInputEnd);
-        
-        window.addEventListener('touchstart', e => { 
-            handleInputStart(e.touches[0].clientX, e.touches[0].clientY); 
+
+        window.addEventListener('touchstart', e => {
+            handleInputStart(e.touches[0].clientX, e.touches[0].clientY);
             if (audioCtx.state === 'suspended') audioCtx.resume();
-        }, {passive: false});
-        window.addEventListener('touchmove', e => { 
-            e.preventDefault(); 
-            handleInputMove(e.touches[0].clientX, e.touches[0].clientY); 
-        }, {passive: false});
+        }, { passive: false });
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            handleInputMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
         window.addEventListener('touchend', handleInputEnd);
 
         resize();
 
     </script>
 </body>
+
 </html>
